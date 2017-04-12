@@ -1,0 +1,33 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+
+<dom-module id="hearth-card">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <paper-card>
+      <div class="card-content">
+        [[item.name]]
+        <img src="[[item.img]]" />
+      </div>
+    </paper-card>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'hearth-card',
+
+      properties: {
+        item: {
+          type: Object,
+          notify: true
+        }
+      }
+    });
+  </script>
+</dom-module>

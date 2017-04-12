@@ -1,0 +1,97 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-list/iron-list.html">
+
+
+<link rel="import" href="hearth-card.html">
+
+<dom-module id="hearth-app">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+
+      .list {
+        display: flex;
+        flex-direction: row;
+        align-items: space-between;
+        justify-content: space-between;
+        width: 100vw;
+      }
+
+      .list .card {
+        display: block;
+        flex: 1;
+      }
+    </style>
+
+    <iron-ajax id="cardUpdate" url="http://localhost:8080/response.json" headers="{{ajaxHeaders}}" on-response="_onCardUpdateResponse" on-error="_handleError"></iron-ajax>
+    <iron-ajax id="cardBackend" url="http://localhost:3000/cards" last-response="{{cards}}" on-response="_onCardResponse" on-error="_handleError"></iron-ajax>
+
+    <paper-button on-tap="_updateCards">
+      Update cards
+    </paper-button>
+    <paper-button on-tap="_loadCards">
+      Load cards
+    </paper-button>
+
+    <div class="list">
+      <template is="dom-repeat" items="{{cards}}">
+        <hearth-card class="card" item="[[item]]"></hearth-card>
+      </template>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'hearth-app',
+
+      properties: {
+        ajaxHeaders: {
+          type: Object,
+          notify: true,
+          value: {},
+        },
+        cards: {
+          type: Object,
+          notify: true
+        }
+      },
+
+      _updateCards: function(e) {
+        this.$.cardUpdate.generateRequest();
+      },
+
+      _loadCards: function(e) {
+        this.$.cardBackend.generateRequest();
+      },
+
+      _onCardUpdateResponse: function(e, request) {
+        var list = request.xhr.response;
+        for( var prop in list ) {
+          if( list.hasOwnProperty( prop ) ) {
+
+            for( var i in list[prop]) {
+              this.$.cardBackend.method = 'POST';
+              this.$.cardBackend.contentType = 'application/json';
+              this.$.cardBackend.handleAs = 'json';
+              this.$.cardBackend.body = list[prop][i];
+              this.$.cardBackend.generateRequest();
+            }
+          }
+        }
+      },
+
+      _onCardResponse: function(e, request) {
+        this.$.cardBackend.method = 'GET';
+      },
+
+      _handleError: function(e) {
+        console.log(e);
+      }
+    });
+  </script>
+</dom-module>
