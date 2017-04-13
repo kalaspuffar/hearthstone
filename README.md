@@ -1,10 +1,22 @@
-# \<hearthstone\>
+# Hearthstone Card Helper
 
 Application to build decks in hearthstone.
 
 ## Install the Polymer-CLI
 
 First, make sure you have the [Polymer CLI](https://www.npmjs.com/package/polymer-cli) installed. Then run `polymer serve` to serve your application locally.
+
+## Install json-server
+
+```
+npm install -g json-server
+```
+
+## Start backend server for handling json rest calls
+
+```
+json-server db.json
+```
 
 ## Viewing Your Application
 
