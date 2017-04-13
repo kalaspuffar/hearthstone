@@ -2,7 +2,9 @@
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../bower_components/iron-list/iron-list.html">
-
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu-light.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
 
 <link rel="import" href="hearth-card.html">
 
@@ -18,7 +20,7 @@
         flex-direction: row;
         align-items: space-between;
         justify-content: space-between;
-        width: 100vw;
+        width: 97vw;
         flex-wrap: wrap;
       }
 
@@ -26,19 +28,56 @@
         display: block;
         flex: 1;
       }
+
+      .menubar {
+        display: flex;
+        flex-direction: row;
+        background: #7721f3;
+        box-shadow: 5px 5px 10px -2px rgba(102,102,102,1);
+        padding: 10px;
+      }
+
+      paper-button {
+        height: 40px;
+        background: white;
+      }
+
+      paper-dropdown-menu-light {
+        padding: 0 10px 0 10px;
+        height: 40px;
+        background: white;
+        border-radius: 3px;
+      }
     </style>
 
     <iron-ajax id="cardUpdate" url="http://localhost:8080/response.json" headers="{{ajaxHeaders}}" on-response="_onCardUpdateResponse" on-error="_handleError"></iron-ajax>
     <iron-ajax id="cardBackend" url="http://localhost:3000/cards" last-response="{{cards}}" on-response="_onCardResponse" on-error="_handleError"></iron-ajax>
     <iron-ajax id="cardBackendUpdate" url="" on-response="_onCardResponse" on-error="_handleError"></iron-ajax>
 
-    <paper-button on-tap="_updateCards">
-      Update cards
-    </paper-button>
-    <paper-button on-tap="_loadCards">
-      Load cards
-    </paper-button>
+    <div class="menubar">
+      <paper-button on-tap="_updateCards">
+        Update cards
+      </paper-button>
+      <paper-button on-tap="_loadCards">
+        Load cards
+      </paper-button>
 
+      <paper-dropdown-menu-light value="{{playerClass}}" label="Player class" no-label-float>
+        <paper-listbox class="dropdown-content">
+          <paper-item></paper-item>
+          <paper-item>Neutral</paper-item>
+          <paper-item>Druid</paper-item>
+          <paper-item>Rogue</paper-item>
+          <paper-item>Paladin</paper-item>
+          <paper-item>Mage</paper-item>
+          <paper-item>Warrior</paper-item>
+          <paper-item>Hunter</paper-item>
+          <paper-item>Shaman</paper-item>
+          <paper-item>Warlock</paper-item>
+          <paper-item>Priest</paper-item>
+        </paper-listbox>
+      </paper-dropdown-menu-light>
+    </div>
     <div class="list">
       <template is="dom-repeat" items="{{cards}}" initial-count="30" target-framerate="60">
         <hearth-card class="card" item="[[item]]"></hearth-card>
@@ -60,12 +99,28 @@
         cards: {
           type: Object,
           notify: true
+        },
+        playerClass: {
+          type: String,
+          notify: true,
+          observer: '_playerClassChanged'
         }
       },
 
       listeners: {
         'owned-changed-one': '_ownerChangedOne',
         'owned-changed-two': '_ownerChangedTwo'
+      },
+
+      _playerClassChanged: function(playerClass) {
+        this.$.cardBackend.method = 'GET';
+        this.$.cardBackend.params = {
+          'collectible': true,
+          'type_ne': 'Hero',
+          'playerClass': playerClass
+        };
+        this.$.cardBackend.body = {};
+        this.$.cardBackend.generateRequest();
       },
 
       _ownerChangedOne: function(e) {
