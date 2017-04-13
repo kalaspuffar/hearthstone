@@ -19,6 +19,7 @@
         align-items: space-between;
         justify-content: space-between;
         width: 100vw;
+        flex-wrap: wrap;
       }
 
       .list .card {
@@ -29,6 +30,7 @@
 
     <iron-ajax id="cardUpdate" url="http://localhost:8080/response.json" headers="{{ajaxHeaders}}" on-response="_onCardUpdateResponse" on-error="_handleError"></iron-ajax>
     <iron-ajax id="cardBackend" url="http://localhost:3000/cards" last-response="{{cards}}" on-response="_onCardResponse" on-error="_handleError"></iron-ajax>
+    <iron-ajax id="cardBackendUpdate" url="" on-response="_onCardResponse" on-error="_handleError"></iron-ajax>
 
     <paper-button on-tap="_updateCards">
       Update cards
@@ -38,7 +40,7 @@
     </paper-button>
 
     <div class="list">
-      <template is="dom-repeat" items="{{cards}}">
+      <template is="dom-repeat" items="{{cards}}" initial-count="30" target-framerate="60">
         <hearth-card class="card" item="[[item]]"></hearth-card>
       </template>
     </div>
@@ -61,11 +63,41 @@
         }
       },
 
+      listeners: {
+        'owned-changed-one': '_ownerChangedOne',
+        'owned-changed-two': '_ownerChangedTwo'
+      },
+
+      _ownerChangedOne: function(e) {
+        this._ownerChanged(e.detail.id, {'ownedOne': e.detail.checked});
+      },
+
+      _ownerChangedTwo: function(e) {
+        this._ownerChanged(e.detail.id, {'ownedTwo': e.detail.checked});
+      },
+
+
+      _ownerChanged: function(id, body) {
+        this.$.cardBackendUpdate.url = 'http://localhost:3000/cards/' + id;
+        this.$.cardBackendUpdate.method = 'PATCH';
+        this.$.cardBackendUpdate.contentType = 'application/json';
+        this.$.cardBackendUpdate.handleAs = 'json';
+        this.$.cardBackendUpdate.params = {};
+        this.$.cardBackendUpdate.body = body;
+        this.$.cardBackendUpdate.generateRequest();
+      },
+
       _updateCards: function(e) {
         this.$.cardUpdate.generateRequest();
       },
 
       _loadCards: function(e) {
+        this.$.cardBackend.method = 'GET';
+        this.$.cardBackend.params = {
+          'collectible': true,
+          'type_ne': 'Hero'
+        };
+        this.$.cardBackend.body = {};
         this.$.cardBackend.generateRequest();
       },
 
@@ -78,6 +110,7 @@
               this.$.cardBackend.method = 'POST';
               this.$.cardBackend.contentType = 'application/json';
               this.$.cardBackend.handleAs = 'json';
+              this.$.cardBackend.params = {};
               this.$.cardBackend.body = list[prop][i];
               this.$.cardBackend.generateRequest();
             }
@@ -86,7 +119,7 @@
       },
 
       _onCardResponse: function(e, request) {
-        this.$.cardBackend.method = 'GET';
+        console.log('Card response');
       },
 
       _handleError: function(e) {
