@@ -1,10 +1,10 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
-<link rel="import" href="../bower_components/iron-list/iron-list.html">
 <link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu-light.html">
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
 
 <link rel="import" href="hearth-card.html">
 
@@ -37,12 +37,22 @@
         padding: 10px;
       }
 
+      paper-input {
+        padding: 0 10px 0 10px;
+        height: 40px;
+        width: 400px;
+        background: white;
+        border-radius: 3px;
+        margin: 0 10px 0 0;
+      }
+
       paper-button {
         height: 40px;
         background: white;
       }
 
       paper-dropdown-menu-light {
+        margin: 0 0 0 10px;
         padding: 0 10px 0 10px;
         height: 40px;
         background: white;
@@ -50,11 +60,14 @@
       }
     </style>
 
-    <iron-ajax id="cardUpdate" url="http://localhost:8080/response.json" headers="{{ajaxHeaders}}" on-response="_onCardUpdateResponse" on-error="_handleError"></iron-ajax>
+    <iron-ajax id="cardUpdate" url="https://omgvamp-hearthstone-v1.p.mashape.com/cards" on-response="_onCardUpdateResponse" on-error="_handleError"></iron-ajax>
     <iron-ajax id="cardBackend" url="http://localhost:3000/cards" last-response="{{cards}}" on-response="_onCardResponse" on-error="_handleError"></iron-ajax>
     <iron-ajax id="cardBackendUpdate" url="" on-response="_onCardResponse" on-error="_handleError"></iron-ajax>
 
     <div class="menubar">
+
+      <paper-input label="Mashape key" value="{{mashApeKey}}" no-label-float></paper-input>
+
       <paper-button on-tap="_updateCards">
         Update cards
       </paper-button>
@@ -62,21 +75,45 @@
         Load cards
       </paper-button>
 
-      <paper-dropdown-menu-light class="dropdown" value="{{playerClass}}" label="Player class" no-label-float>
+      <paper-dropdown-menu-light class="dropdown" value="{{playerClass}}" label="Player class" no-label-float no-animations>
         <paper-listbox class="dropdown-content">
           <paper-item></paper-item>
-          <paper-item>Neutral</paper-item>
           <paper-item>Druid</paper-item>
-          <paper-item>Rogue</paper-item>
-          <paper-item>Paladin</paper-item>
-          <paper-item>Mage</paper-item>
-          <paper-item>Warrior</paper-item>
           <paper-item>Hunter</paper-item>
+          <paper-item>Mage</paper-item>
+          <paper-item>Paladin</paper-item>
+          <paper-item>Priest</paper-item>
+          <paper-item>Rogue</paper-item>
           <paper-item>Shaman</paper-item>
           <paper-item>Warlock</paper-item>
-          <paper-item>Priest</paper-item>
+          <paper-item>Warrior</paper-item>
+          <paper-item>Neutral</paper-item>
         </paper-listbox>
       </paper-dropdown-menu-light>
+
+      <paper-dropdown-menu-light class="dropdown" value="{{cost}}" label="Cost" no-label-float no-animations>
+        <paper-listbox class="dropdown-content">
+          <paper-item></paper-item>
+          <paper-item>0</paper-item>
+          <paper-item>1</paper-item>
+          <paper-item>2</paper-item>
+          <paper-item>3</paper-item>
+          <paper-item>4</paper-item>
+          <paper-item>5</paper-item>
+          <paper-item>6</paper-item>
+          <paper-item>7</paper-item>
+        </paper-listbox>
+      </paper-dropdown-menu-light>
+
+      <paper-dropdown-menu-light class="dropdown" value="{{owned}}" label="Owned number" no-label-float no-animations>
+        <paper-listbox class="dropdown-content">
+          <paper-item></paper-item>
+          <paper-item>None</paper-item>
+          <paper-item>One</paper-item>
+          <paper-item>Two</paper-item>
+        </paper-listbox>
+      </paper-dropdown-menu-light>
+
     </div>
     <div class="list">
       <template is="dom-repeat" items="{{cards}}" initial-count="30" target-framerate="60">
@@ -96,6 +133,7 @@
           notify: true,
           value: {},
         },
+        mashApeKey: String,
         cards: {
           type: Object,
           notify: true
@@ -103,7 +141,17 @@
         playerClass: {
           type: String,
           notify: true,
-          observer: '_playerClassChanged'
+          value: ""
+        },
+        cost: {
+          type: String,
+          notify: true,
+          value: ""
+        },
+        owned: {
+          type: String,
+          notify: true,
+          value: ""
         }
       },
 
@@ -112,13 +160,38 @@
         'owned-changed-two': '_ownerChangedTwo'
       },
 
-      _playerClassChanged: function(playerClass) {
+      observers: [
+        '_queryChanged(playerClass, cost, owned)'
+      ],
+
+      _queryChanged: function(playerClass, cost, owned) {
         this.$.cardBackend.method = 'GET';
         this.$.cardBackend.params = {
           'collectible': true,
           'type_ne': 'Hero',
-          'playerClass': playerClass
         };
+
+        if(playerClass) this.$.cardBackend.params['playerClass'] = playerClass;
+        if(cost == 7) {
+          this.$.cardBackend.params['cost_gte'] = 7;
+          this.$.cardBackend.params['_sort'] = 'name';
+        } else if(cost) {
+          this.$.cardBackend.params['cost'] = cost;
+          this.$.cardBackend.params['_sort'] = 'name';
+        }
+        if(owned) {
+          if(owned == 'None') {
+            this.$.cardBackend.params['ownedOne_ne'] = true;
+            this.$.cardBackend.params['ownedTwo_ne'] = true;
+          }
+          if(owned == 'One') {
+            this.$.cardBackend.params['ownedOne'] = true;
+          }
+          if(owned == 'Two') {
+            this.$.cardBackend.params['ownedTwo'] = true;
+          }
+        }
+
         this.$.cardBackend.body = {};
         this.$.cardBackend.generateRequest();
       },
@@ -142,7 +215,11 @@
         this.$.cardBackendUpdate.generateRequest();
       },
 
+
       _updateCards: function(e) {
+        this.$.cardUpdate.headers = {
+            'X-Mashape-Key': this.mashApeKey
+        };
         this.$.cardUpdate.generateRequest();
       },
 
