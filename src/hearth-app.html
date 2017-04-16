@@ -62,16 +62,13 @@
 
     <iron-ajax id="cardUpdate" url="https://omgvamp-hearthstone-v1.p.mashape.com/cards" on-response="_onCardUpdateResponse" on-error="_handleError"></iron-ajax>
     <iron-ajax id="cardBackend" url="http://localhost:3000/cards" last-response="{{cards}}" on-response="_onCardResponse" on-error="_handleError"></iron-ajax>
-    <iron-ajax id="cardBackendUpdate" url="" on-response="_onCardResponse" on-error="_handleError"></iron-ajax>
+    <iron-ajax id="cardBackendUpdate" url="" on-response="_onCardResponseUpdate" on-error="_handleError"></iron-ajax>
 
     <div class="menubar">
       <paper-input label="Mashape key" value="{{mashApeKey}}" no-label-float></paper-input>
 
       <paper-button on-tap="_updateCards">
         Update cards
-      </paper-button>
-      <paper-button on-tap="_loadCards">
-        Load cards
       </paper-button>
 
       <paper-dropdown-menu-light class="dropdown" value="{{playerClass}}" label="Player class" no-label-float no-animations>
@@ -123,7 +120,6 @@
 
   <script>
     Polymer({
-
       is: 'hearth-app',
 
       properties: {
@@ -150,6 +146,7 @@
       },
 
       listeners: {
+        'owned-changed': '_ownerChanged',
         'owned-changed-one': '_ownerChangedOne',
         'owned-changed-two': '_ownerChangedTwo'
       },
@@ -175,14 +172,13 @@
         }
         if(owned) {
           if(owned == 'None') {
-            this.$.cardBackend.params['ownedOne_ne'] = true;
-            this.$.cardBackend.params['ownedTwo_ne'] = true;
+            this.$.cardBackend.params['owned'] = 0;
           }
           if(owned == 'One') {
-            this.$.cardBackend.params['ownedOne'] = true;
+            this.$.cardBackend.params['owned'] = 1;
           }
           if(owned == 'Two') {
-            this.$.cardBackend.params['ownedTwo'] = true;
+            this.$.cardBackend.params['owned'] = 2;
           }
         }
 
@@ -190,16 +186,11 @@
         this.$.cardBackend.generateRequest();
       },
 
-      _ownerChangedOne: function(e) {
-        this._ownerChanged(e.detail.id, {'ownedOne': e.detail.checked});
+      _ownerChanged: function(e) {
+        this._ownerChangedUpdate(e.detail.id, {'owned': e.detail.owned});
       },
 
-      _ownerChangedTwo: function(e) {
-        this._ownerChanged(e.detail.id, {'ownedTwo': e.detail.checked});
-      },
-
-
-      _ownerChanged: function(id, body) {
+      _ownerChangedUpdate: function(id, body) {
         this.$.cardBackendUpdate.url = 'http://localhost:3000/cards/' + id;
         this.$.cardBackendUpdate.method = 'PATCH';
         this.$.cardBackendUpdate.contentType = 'application/json';
@@ -217,7 +208,7 @@
         this.$.cardUpdate.generateRequest();
       },
 
-      _loadCards: function(e) {
+      _updateValues: function(e) {
         this.$.cardBackend.method = 'GET';
         this.$.cardBackend.params = {
           'collectible': true,
@@ -233,6 +224,8 @@
           if( list.hasOwnProperty( prop ) ) {
 
             for( var i in list[prop]) {
+              list[prop][i].owned = 0;
+
               this.$.cardBackend.method = 'POST';
               this.$.cardBackend.contentType = 'application/json';
               this.$.cardBackend.handleAs = 'json';
@@ -245,6 +238,10 @@
       },
 
       _onCardResponse: function(e, request) {
+        console.log('Card response');
+      },
+
+      _onCardResponseUpdate: function(e) {
         console.log('Card response');
       },
 

@@ -1,6 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/papyrus-details/papyrus-details.html">
-<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
 
 <dom-module id="hearth-card">
   <template>
@@ -23,12 +23,20 @@
         padding: 10px;
         width: 200px;
       }
+
+      .owned {
+        --paper-input-container-label-floating: {
+          font-family: Roboto;
+          font-size: 20px;
+          font-weight: 700;
+        }
+      }
     </style>
 
     <div class="card-content">
-      <paper-checkbox data-id$="[[item.id]]" checked="[[item.ownedOne]]" on-tap="_changeOwnedOne">Owned 1</paper-checkbox>
-      <paper-checkbox data-id$="[[item.id]]" checked="[[item.ownedTwo]]" on-tap="_changeOwnedTwo">Owned 2</paper-checkbox>
-      <img src="[[_getImageUrl(item.img)]]" />
+      <img data-id$="[[item.id]]" src="[[_getImageUrl(item.img)]]" on-tap="_incOwned" />
+      <paper-input class="owned" id="owned" label="Owned" value="[[item.owned]]" placeholder="0" readonly>
+      </paper-input>
       <papyrus-details>
         <summary>[[item.name]]</summary>
         <p>
@@ -66,12 +74,25 @@
       properties: {
         item: {
           type: Object,
-          notify: true
-        }
+          notify: true,
+        },
       },
 
       _getImageUrl: function(url) {
           return url ? url : 'images/missing.png';
+      },
+
+      _incOwned: function(e) {
+        if(!this.item.owned) this.item.owned = 0;
+        this.item.owned++;
+        if(this.item.owned > 2) this.item.owned = 0;
+
+        this.fire('owned-changed', {
+          'id': e.currentTarget.dataset.id,
+          'owned': this.item.owned
+        });
+
+        this.$.owned.value = this.item.owned;
       },
 
       _changeOwnedOne: function(e) {
